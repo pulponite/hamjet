@@ -4,3 +4,6 @@
 [submodule "thirdparty/SDL2"]
 	path = thirdparty/SDL2
 	url = https://github.com/spurious/SDL-mirror
+[submodule "thirdparty/lua"]
+	path = thirdparty/lua
+	url = https://github.com/LuaDist/lua.git
