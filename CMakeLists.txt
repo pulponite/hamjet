@@ -9,40 +9,19 @@ endif()
 cmake_minimum_required(VERSION 3.5)
 project(Hamjet)
 
+option(BUILD_DEMO "Whether to build the demo app" ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Hamjet_SOURCE_DIR}/cmake")
 set(BIN_DIR ${Hamjet_SOURCE_DIR}/bin)
 
-## Configure 3rd party dependencies
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(THIRDPARTY_INCLUDE_DIRS)
-set(THIRDPARTY_LIBS)
+add_subdirectory("cmake/thirdparty/")
 
-### SDL2
-### Prevent shared lib from being built because the shared and static libs stomp on each other on windows.
-set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-add_subdirectory("thirdparty/SDL2" "${CMAKE_BINARY_DIR}/SDL2")
-set(THIRDPARTY_INCLUDE_DIRS ${THIRDPARTY_INCLUDE_DIRS} "thirdparty/SDL2/include")
-set(THIRDPARTY_LIBS ${THIRDPARTY_LIBS} SDL2main SDL2-static)
+message(STATUS "Top ${FOOBAR} ${THIRDPARTY_LIBS}")
 
-### Lua
-if(EMSCRIPTEN)
-  message(STATUS "Lua: Disabling ULONGJMP and RELATIVE_LOADLIB for emscripten support")
-  set(LUA_USE_ULONGJMP OFF)
-  set(LUA_USE_RELATIVE_LOADLIB OFF)
-endif()
-add_subdirectory("thirdparty/lua" "${CMAKE_BINARY_DIR}/lua")
-set(THIRDPARTY_INCLUDE_DIRS ${THIRDPARTY_INCLUDE_DIRS} "${CMAKE_BINARY_DIR}/lua" "thirdparty/lua/src")
-set(THIRDPARTY_LIBS ${THIRDPARTY_LIBS} liblua_static)
+add_subdirectory("cmake/libhamjet/")
 
-## Build Hamjet itself
-
-if(EMSCRIPTEN)
-  SET(CMAKE_EXECUTABLE_SUFFIX ".html")
-endif()
-
-add_executable(Hamjet src/main.c)
-
-include_directories(${THIRDPARTY_INCLUDE_DIRS})
-target_link_libraries(Hamjet ${THIRDPARTY_LIBS})
-
-install(TARGETS Hamjet RUNTIME DESTINATION ${BIN_DIR})
+if(BUILD_DEMO)
+  add_subdirectory("cmake/demo")
+endif(BUILD_DEMO)
