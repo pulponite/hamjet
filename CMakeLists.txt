@@ -9,8 +9,6 @@ endif()
 cmake_minimum_required(VERSION 3.5)
 project(Hamjet)
 
-option(BUILD_DEMO "Whether to build the demo app" ON)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Hamjet_SOURCE_DIR}/cmake")
 set(BIN_DIR ${Hamjet_SOURCE_DIR}/bin)
 
@@ -21,7 +19,3 @@ add_subdirectory("cmake/thirdparty/")
 message(STATUS "Top ${FOOBAR} ${THIRDPARTY_LIBS}")
 
 add_subdirectory("cmake/libhamjet/")
-
-if(BUILD_DEMO)
-  add_subdirectory("cmake/demo")
-endif(BUILD_DEMO)
