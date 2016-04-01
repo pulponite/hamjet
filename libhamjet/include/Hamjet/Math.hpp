@@ -1,5 +1,5 @@
-#ifndef HAMMATH_HPP
-#define HAMMATH_HPP
+#ifndef HAMJET_MATH_HPP
+#define HAMJET_MATH_HPP
 
 #include <cmath>
 

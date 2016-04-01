@@ -1,4 +1,4 @@
-#include "HamMath.hpp"
+#include "Hamjet/Math.hpp"
 
 #include "gtest/gtest.h"
 

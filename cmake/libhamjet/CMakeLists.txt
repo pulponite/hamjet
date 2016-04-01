@@ -4,7 +4,7 @@ set(CMAKE_CURRENT_SOURCE_DIR "${Hamjet_SOURCE_DIR}/libhamjet")
 set(LIBHAMJET_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 file(GLOB sourceFiles "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB includeFiles "${LIBHAMJET_INCLUDES}/*.hpp")
+file(GLOB includeFiles "${LIBHAMJET_INCLUDES}/Hamjet/*.hpp")
 file(GLOB testFiles "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
 
 source_group("Source Files" FILES ${sourceFiles})
