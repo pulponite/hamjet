@@ -1,4 +1,4 @@
-set(gtest_force_shared_crt on)
+set(gtest_force_shared_crt ON CACHE BOOL "Force shared lib use by googletest")
 add_subdirectory("${Hamjet_SOURCE_DIR}/thirdparty/googletest-d225acc" "${CMAKE_CURRENT_BINARY_DIR}/googletest")
 
 set_target_properties(gmock PROPERTIES FOLDER "hamjet/thirdparty")
