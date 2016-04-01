@@ -9,6 +9,7 @@ namespace Hamjet {
 		virtual bool update(float dt) = 0;
 		virtual void draw() = 0;
 		virtual void onClick(int x, int y) = 0;
+		virtual void onKeyDown() = 0;
 	};
 
 	class Engine {

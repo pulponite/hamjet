@@ -57,6 +57,9 @@ namespace Hamjet {
 				else if (e.type == SDL_MOUSEBUTTONDOWN) {
 					a->onClick(e.button.x, e.button.y);
 				}
+				else if (e.type == SDL_KEYDOWN) {
+					a->onKeyDown();
+				}
 			}
 
 			cont = cont && a->update(dt);
