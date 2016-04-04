@@ -9,6 +9,8 @@
 
 #include "Hamjet/NeuralNet.hpp"
 
+// TODO: Speciation
+
 namespace Hamjet {
 
 	class Gene {
