@@ -1,16 +1,27 @@
 #include "Hamjet\NeatEvolver.hpp"
 
+#include <algorithm>
+
 namespace Hamjet {
 
 	Genome::Genome(int in, int on, int hn, std::vector<Gene> gs) :
 		inNodes(in), outNodes(on), hiddenNodes(hn),
 		genes(gs), fitness(0) {}
 
+	Genome::Genome(const Genome& o) : Genome(o.inNodes, o.outNodes, o.hiddenNodes, o.genes) {}
+
 	std::shared_ptr<NeuralNet> Genome::buildNeuralNet() {
 		auto net = std::make_shared<NeuralNet>();
 
 		for (int i = 0; i < inNodes + outNodes + hiddenNodes; i++) {
 			auto n = std::make_shared<NeuralNetNode>();
+
+			if (i >= inNodes && i < inNodes + outNodes) {
+				n->setProcessStage(1);
+			}
+			else {
+				n->setProcessStage(0);
+			}
 			net->addNode(n);
 		}
 
@@ -32,51 +43,152 @@ namespace Hamjet {
 	}
 
 	void NeatEvolver::firstGeneration() {
+		Species s1;
+		Species s2;
+
+
 		for (int i = 0; i < generationSize; i++) {
 			auto g = std::make_shared<Genome>(simulator->getNumInputs(), simulator->getNumOutputs(), 0, std::vector<Gene>());
 			generation.push_back(g);
+
+			if (i % 2 == 0) {
+				s1.genomes.push_back(g);
+			}
+			else {
+				s2.genomes.push_back(g);
+			}
 		}
 
+		speciatedGeneration.push_back(s1);
+		speciatedGeneration.push_back(s2);
+
 		mutateGeneration(generation);
+
+		generationCount++;
+	}
+
+	void NeatEvolver::addGenomeToGeneration(std::shared_ptr<Genome> genome, SpeciatedGeneration& generation) {
+		const float maxDistance = 1;
+
+		bool foundSpot = false;
+		for (auto& species : generation) {
+			float distance = genomeDistance(*genome, **species.genomes.begin());
+			if (genomeDistance(*genome, **species.genomes.begin()) < maxDistance) {
+				species.genomes.push_back(genome);
+				foundSpot = true;
+				break;
+			}
+		}
+
+		if (!foundSpot) {
+			Species s;
+			s.genomes.push_back(genome);
+			s.genomes.push_back(genome);
+			s.genomes.push_back(genome);
+			generation.push_back(s);
+		}
 	}
 
 	void NeatEvolver::evolveNextGeneration() {
-		Generation nextGen;
+		// Sort each species by fitness & cull bottom half
+		const int generationSize = 150;
+		const float combineChance = 0.75;
+		float totalFitness = 0;
+		SpeciatedGeneration newSpeciatedGeneration;
+		Generation newGeneration;
 
-		generation.sort(Genome::fitnessComp);
+		// Delete loser half of each species, calculate species fitness
+		for (auto& species : speciatedGeneration) {
+			std::sort(species.genomes.begin(), species.genomes.end(), Genome::fitnessComp);
+			species.genomes.resize(species.genomes.size() / 2);
+			std::random_shuffle(species.genomes.begin(), species.genomes.end());
 
-		auto gi = generation.begin();
-		int totalFitness = 0;
-		for (int i = 0; i < generation.size() / 2; i++) {
-			totalFitness += (*gi++)->fitness;
-		}
-		std::vector<std::shared_ptr<Genome>> winningGenomes(std::begin(generation), gi);
-
-		int generationSize = generation.size();
-		int offspringLeft = generationSize;
-
-		int secondTotal = 0;
-		for (auto genome : winningGenomes) {
-			secondTotal += genome->fitness;
-			int offspring = (int)ceil((float)generationSize * ((float)genome->fitness / (float)totalFitness));
-			if (offspringLeft < offspring) {
-				offspring = offspringLeft;
+			int speciesFitness = 0;
+			int maxFitness = 0;
+			for (auto& genome : species.genomes) {
+				speciesFitness += genome->fitness;
+				if (genome->fitness > maxFitness) {
+					maxFitness = genome->fitness;
+				}
 			}
-			offspringLeft -= offspring;
+			species.sharedFitness = (float)speciesFitness / species.genomes.size();
+
+			if (maxFitness > species.maxFitness) {
+				species.maxFitness = maxFitness;
+				species.staleness = 0;
+			}
+			else {
+				species.staleness++;
+			}
+		}
+
+		// Purge empty or unimproving species
+		speciatedGeneration.remove_if([](Species species) -> bool {
+			return species.genomes.empty() || species.staleness > 500;
+		});
+
+		if (speciatedGeneration.empty()) {
+			Species s1;
+			Species s2;
+			s1.sharedFitness = 1;
+			s2.sharedFitness = 1;
+
+			int i = 0;
+			for (auto& g : generation) {
+				if (i++ % 2 == 0) {
+					s1.genomes.push_back(g);
+				}
+				else {
+					s2.genomes.push_back(g);
+				}
+			}
+
+			speciatedGeneration.push_back(s1);
+			speciatedGeneration.push_back(s2);
+		}
+
+		// Calculate total fitness and seed surviving species
+		for (auto& species : speciatedGeneration) {
+			totalFitness += species.sharedFitness;
+			Species newSpecies;
+			newSpecies.maxFitness = species.maxFitness;
+			newSpecies.staleness = species.staleness;
+			newSpecies.genomes.push_back(*species.genomes.begin());
+			newSpeciatedGeneration.push_back(newSpecies);
+		}
+
+		// Make offspring from remaining generations
+		for (auto& species : speciatedGeneration) {
+			int offspring = int(150 * (species.sharedFitness / totalFitness));
 
 			for (int i = 0; i < offspring; i++) {
-				int otherIndex = twister() % winningGenomes.size();
-				auto& otherGenome = *winningGenomes[otherIndex];
+				float r = (float)twister() / (float)twister.max();
 
-				nextGen.push_back(breed(*genome, otherGenome));
+				int g1 = offspring % species.genomes.size();
+				int g2 = twister() % species.genomes.size();
+
+				if (r < combineChance) {
+					auto newGenome = breed(*species.genomes[g1], *species.genomes[g2]);
+					addGenomeToGeneration(newGenome, newSpeciatedGeneration);
+					newGeneration.push_back(newGenome);
+				}
+				else {
+					auto newGenome = std::make_shared<Genome>(*species.genomes[g1]);
+					addGenomeToGeneration(newGenome, newSpeciatedGeneration);
+					newGeneration.push_back(newGenome);
+				}
 			}
 		}
+		
+		// Purge empty
+		speciatedGeneration.remove_if([](Species species) -> bool {
+			return species.genomes.empty();
+		});
 
-		mutateGeneration(nextGen);
-
-		printf("New generation size: %d\n", nextGen.size());
-
-		generation = nextGen;
+		mutateGeneration(newGeneration);
+		generation = newGeneration;
+		speciatedGeneration = newSpeciatedGeneration;
+		generationCount++;
 	}
 
 	void NeatEvolver::mutateGeneration(Generation& gen) {
@@ -88,11 +200,58 @@ namespace Hamjet {
 	}
 
 
-	float NeatEvolver::genomeDistance(Genome& g1, Genome& g2) {
+	float NeatEvolver::genomeDistance(const Genome& g1, const Genome& g2) {
+		const float c1 = 2;
+		const float c2 = 2;
+		const float c3 = 0.4f;
+		
+		float n =fmax((float)g1.genes.size(), (float)g2.genes.size());
+		if (g1.genes.size() < 20 || g2.genes.size() < 20) {
+			n = 1;
+		}
+
+		float weightDifference = 0;
+		int numMatchingGenes = 0;
+		int numDisjointGenes = 0;
+		int numExcessGenes = 0;
+
 		auto genes1 = g1.genes.begin();
 		auto genes2 = g2.genes.begin();
 
-		return 1;
+		while (genes1 != g1.genes.end() || genes2 != g2.genes.end()) {
+			bool has1 = genes1 != g1.genes.end();
+			bool has2 = genes2 != g2.genes.end();
+			int innovation1 = has1 ? genes1->innovationNumber : 0;
+			int innovation2 = has2 ? genes2->innovationNumber : 0;
+
+			if (has1 && has2) {
+				if (innovation1 == innovation2) {
+					// We're in the matching gene prefix
+					weightDifference += genes1->weight - genes2->weight;
+					numMatchingGenes++;
+					genes1++;
+					genes2++;
+				}
+				else if (innovation1 > innovation2) {
+					numDisjointGenes++;
+					genes1++;
+				}
+				else {
+					numDisjointGenes++;
+					genes2++;
+				}
+			}
+			else if (has1) {
+				numExcessGenes++;
+				genes1++;
+			}
+			else {
+				numExcessGenes++;
+				genes2++;
+			}
+		}
+
+		return (c1 * numExcessGenes / n) + (c2 * numDisjointGenes / n) + (c3 * weightDifference / fmax(1,numMatchingGenes));
 	}
 
 	std::shared_ptr<Genome> NeatEvolver::breed(Genome& g1, Genome& g2) {

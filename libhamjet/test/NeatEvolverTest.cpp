@@ -85,3 +85,34 @@ TEST_F(NeatEvolverTest, BreedingUnevenGenes) {
 	genesEqual(bg->genes[1], g1.genes[1]);
 	genesEqual(bg->genes[2], g1.genes[2]);
 }
+
+TEST_F(NeatEvolverTest, DistanceZeroForIdentity) {
+	NeatEvolver e(sim);
+
+	auto g1 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false } }));
+	auto g2 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false } }));
+
+	float d = e.genomeDistance(g1, g2);
+	EXPECT_FLOAT_EQ(0, d);
+}
+
+TEST_F(NeatEvolverTest, DistanceOverZeroForDifference) {
+	NeatEvolver e(sim);
+
+	auto g1 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false } }));
+	auto g2 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false },{ 2, 0, 1, 1.0f, false } }));
+
+	float d = e.genomeDistance(g1, g2);
+	EXPECT_LT(0, d);
+}
+
+TEST_F(NeatEvolverTest, DistanceReflexive) {
+	NeatEvolver e(sim);
+
+	auto g1 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false } }));
+	auto g2 = Genome(1, 1, 1, std::vector<Gene>({ { 1, 0, 1, 1.0f, false },{ 2, 0, 1, 1.0f, false } }));
+
+	float d1 = e.genomeDistance(g1, g2);
+	float d2 = e.genomeDistance(g2, g1);
+	EXPECT_FLOAT_EQ(d1, d2);
+}

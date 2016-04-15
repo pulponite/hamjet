@@ -15,11 +15,16 @@ namespace Hamjet {
 
 
 	void NeuralNetNode::collectNextValue() {
-		float v = 0;
-		for (auto& conn : incomingConnections) {
-			v += conn->getContribution();
+		if (incomingConnections.empty()) {
+			nextValue = currentValue;
 		}
-		nextValue = sigmoid(v);
+		else {
+			float v = 0;
+			for (auto& conn : incomingConnections) {
+				v += conn->getContribution();
+			}
+			nextValue = sigmoid(v);
+		}
 	}
 
 	void NeuralNetNode::progress() {
@@ -44,6 +49,14 @@ namespace Hamjet {
 		return (e - 1.0f) / (e + 1.0f);
 	}
 
+	bool NeuralNetNode::processAtStage(int i) {
+		return i == stepStage;
+	}
+
+	void NeuralNetNode::setProcessStage(int i) {
+		stepStage = i;
+	}
+
 
 	void NeuralNet::addNode(std::shared_ptr<NeuralNetNode>& node) {
 		nodes.push_back(node);
@@ -54,12 +67,17 @@ namespace Hamjet {
 	}
 
 	void NeuralNet::stepNetwork() {
-		for (auto& node : nodes) {
-			node->collectNextValue();
-		}
-
-		for (auto& node : nodes) {
-			node->progress();
+		int steppedCount = 0;
+		int stage = 0;
+		while (steppedCount < nodes.size()) {
+			for (auto& node : nodes) {
+				if (node->processAtStage(stage)) {
+					node->collectNextValue();
+					node->progress();
+					steppedCount++;
+				}
+			}
+			stage++;
 		}
 	}
 }

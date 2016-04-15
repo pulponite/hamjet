@@ -37,16 +37,3 @@ TEST_F(NeuralNetTest, SettingInputHighTriggersOutput) {
 	net.stepNetwork();
 	EXPECT_LT(0.1f, out1->value());
 }
-
-TEST_F(NeuralNetTest, InputsResetLowAfterTriggering) {
-	in1->setValue(1.0f);
-	net.stepNetwork();
-	EXPECT_FLOAT_EQ(0, in1->value());
-}
-
-TEST_F(NeuralNetTest, OutputsResetLowAfterTriggering) {
-	in1->setValue(1.0f);
-	net.stepNetwork();
-	net.stepNetwork();
-	EXPECT_FLOAT_EQ(0, out1->value());
-}

@@ -24,6 +24,8 @@ namespace Hamjet {
 		float currentValue;
 		float nextValue;
 
+		int stepStage = 0;
+
 		std::list<std::unique_ptr<NeuralNetConnection>> incomingConnections;
 
 	public:
@@ -33,6 +35,8 @@ namespace Hamjet {
 		void setValue(float v);
 		void connect(std::unique_ptr<NeuralNetConnection>& c);
 		static float sigmoid(float x);
+		bool processAtStage(int s);
+		void setProcessStage(int s);
 	};
 
 	class NeuralNet {
