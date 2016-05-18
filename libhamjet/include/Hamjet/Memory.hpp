@@ -6,8 +6,14 @@
 
 namespace Hamjet {
 
-	typedef std::unique_ptr<SDL_Surface, void(*)(SDL_Surface*)> SDL_Surface_Ptr;
-	typedef std::unique_ptr<SDL_Texture, void(*)(SDL_Texture*)> SDL_Texture_Ptr;
+	typedef std::shared_ptr<SDL_Surface> SDL_Surface_Ptr;
+	typedef std::shared_ptr<SDL_Texture> SDL_Texture_Ptr;
+
+	class Memory {
+	public:
+		static SDL_Surface_Ptr wrap(SDL_Surface* surface);
+		static SDL_Texture_Ptr wrap(SDL_Texture* texture);
+	};
 
 }
 

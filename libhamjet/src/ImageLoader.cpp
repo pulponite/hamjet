@@ -62,7 +62,13 @@ namespace Hamjet {
 		{
 			png_destroy_read_struct(&png, &info, NULL);
 			return NULL;
-		}		if (setjmp(png_jmpbuf(png))) {			png_destroy_read_struct(&png, &info, &end_info);			return NULL;		}
+		}
+
+		if (setjmp(png_jmpbuf(png))) {
+			png_destroy_read_struct(&png, &info, &end_info);
+			return NULL;
+		}
+
 		png_init_io(png, file);
 		png_set_sig_bytes(png, PNG_SIG_SIZE);
 

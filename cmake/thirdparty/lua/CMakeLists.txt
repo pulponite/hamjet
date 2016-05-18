@@ -1,4 +1,4 @@
-project (lua C)
+project (lua CXX)
 
 set(CMAKE_CURRENT_SOURCE_DIR "${Hamjet_SOURCE_DIR}/thirdparty/lua-5.3.2")
 set(LUA_INCLUDES "${Hamjet_SOURCE_DIR}/thirdparty/lua-5.3.2/src")
@@ -39,7 +39,7 @@ set(libFiles
   "${CMAKE_CURRENT_SOURCE_DIR}/src/loadlib.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/src/linit.c")
 
-
+set_source_files_properties( ${libFiles} PROPERTIES LANGUAGE CXX )
 add_library(liblua STATIC ${libFiles})
 target_include_directories(liblua PUBLIC ${LUA_INCLUDES})
 set_target_properties(liblua PROPERTIES FOLDER "hamjet/thirdparty")

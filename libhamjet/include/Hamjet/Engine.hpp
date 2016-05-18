@@ -1,30 +1,30 @@
 #ifndef HAMJET_ENGINE_HPP
 #define HAMJET_ENGINE_HPP
 
-#include "SDL.h"
+#include <SDL.h>
+#include <string>
+#include <lua.h>
+#include <memory>
 
 namespace Hamjet {
-	class Application {
-	public:
-		virtual bool update(float dt) = 0;
-		virtual void draw() = 0;
-		virtual void onClick(int x, int y) = 0;
-		virtual void onKeyDown() = 0;
+	struct EngineConfig {
+		unsigned int windowWidth = 640;
+		unsigned int windowHeight = 480;
+		std::string windowTitle = "Hamjet";
 	};
 
 	class Engine {
 	public:
 		SDL_Window *window;
 		SDL_Renderer *windowRenderer;
+		lua_State* luaState;
 
 	public:
 		Engine();
 
-		bool init(int windowWidth, int windowHeight);
+		bool init(EngineConfig& config);
 		void term();
-		void run(Application* app);
 	};
-
 }
 
 #endif

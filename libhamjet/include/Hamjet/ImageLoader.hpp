@@ -1,6 +1,8 @@
 #ifndef HAMJET_IMAGELOADER_HPP
 #define HAMJET_IMAGELOADER_HPP
 
+#include <Hamjet/Memory.hpp>
+
 #include <SDL.h>
 #include <stdio.h>
 
